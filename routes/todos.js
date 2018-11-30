@@ -1,14 +1,16 @@
 var express = require('express');
 var router = express.Router();
+var _ = require('lodash');
 var {Todo} = require('../models/Todo');
 var {mongoose} = require('../config/db');
-var _ = require('lodash');
+var {authorized} = require('../config/authmiddleware');
+
 
 
 /* GET home page. */
 //-----------------------------listing todos-------------
-router.get('/', function(req, res, next) {
-  Todo.find(function (err,todos) {
+router.get('/',authorized, function(req, res, next) {
+  Todo.find({user:req.user._id},function (err,todos) {
   	if (err) {
   		res.status(404).send(err);
   	}
@@ -20,9 +22,10 @@ router.get('/', function(req, res, next) {
 });
 
 //----------------------------create todo-------------
-router.post('/',function(req,res,next) {
+router.post('/',authorized,function(req,res,next) {
 	var newtodo = new Todo({
-		text:req.body.text
+		text:req.body.text,
+    user:req.user._id
 	});
 	newtodo.save(function (err,docs) {
 		if (err) {
@@ -35,7 +38,7 @@ router.post('/',function(req,res,next) {
 });
 
 //-----------------------------fetch a todo -------------
-router.get('/:id', function(req, res, next) {
+router.get('/:id',authorized, function(req, res, next) {
   Todo.findById(req.params.id,function(err,todo){
   	if (err) {
   		res.status(404).send(err);
@@ -47,9 +50,9 @@ router.get('/:id', function(req, res, next) {
 });
 
 
-//-----------------------------fetch a todo -------------
-router.delete('/:id', function(req, res, next) {
-  Todo.findOneAndDelete(req.params.id,function(todo){
+//-----------------------------delete a todo -------------
+router.delete('/:id',authorized, function(req, res, next) {
+  Todo.findOneAndDelete({_id:req.params.id,user:req.user.id},function(todo){
   	if (!todo) {
   		res.status(404).send();
   	}
@@ -59,7 +62,7 @@ router.delete('/:id', function(req, res, next) {
 });
 
 //-----------------------------update a todo -------------
-router.patch('/:id', function(req, res, next) {
+router.patch('/:id',authorized, function(req, res, next) {
 	var id = req.params.id;
 	var body = _.pick(req.body,['text','completed']);
 	if (_.isBoolean(body.completed)&&body.completed) {
@@ -68,7 +71,7 @@ router.patch('/:id', function(req, res, next) {
 		body.completed = false;
 		body.completedAt= null;
 	}
-  Todo.findByIdAndUpdate(id, {$set:body}, function(err,docs){
+  Todo.findOneAndUpdate({_id:id,user:req.user.id}, {$set:body}, function(err,docs){
   	if (err) {
   		res.status(404).send();
   	}

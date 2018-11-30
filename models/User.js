@@ -21,6 +21,7 @@ var UserSchema = new mongoose.Schema({
 		type: String,
 		
 	}
+	
 });
 
 //---------------------------------- genrate the token  ---------------------------

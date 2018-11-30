@@ -15,7 +15,11 @@ var TodoSchema = new mongoose.Schema({
 	completedAt:{
 		type:Number,
 		default:null
-	} 
+	} ,
+	user:{
+		type:mongoose.Schema.Types.ObjectId,
+		required:true
+	}
 });
 
 var Todo = mongoose.model('todos',TodoSchema);
